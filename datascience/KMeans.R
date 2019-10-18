@@ -1,28 +1,34 @@
 #Kmeans Clustering
 
 getwd()
-install.packages("dplyr")
+#install.packages("dplyr")
 library(dplyr)
 
-PATH <-"D:/Dataset/Computers.csv"
-
+PATH <-"F:/R_CBAP/codes/analytics/datascience/Computers.csv"
+#PATH <-""F:\\R_CBAP\\codes\\analytics\\datascience\\Computers.csv"
 df<- read.csv(PATH)
 
 head(df,10)
 
+view(df)
+#%>% pipe operator
+#cannot deploy clustering on categorial data only on numercial data
 df <- read.csv(PATH) %>%
-  select(-c(X, cd, multi, premium))
+  select(-c(X, cd, multi, premium)) # -c --  remove columns from dataset
 glimpse(df)
 
 summary(df)
+#from summary we saw that variable are not  on same scale price min 900, ram min 2,etc
+#so there is need for standardisation (scale) converting value to z score
+#preparing data for model
 
-
-#rescale the variables with the scale() function of the dplyr library.
+ #rescale the variables with the scale() function of the dplyr library.
 
 rescale_df <- df %>%
   mutate(price_scal = scale(price),
          hd_scal = scale(hd),
          ram_scal = scale(ram),
+         speed_scal = scale(speed),
          screen_scal = scale(screen),
          ads_scal = scale(ads),
          trend_scal = scale(trend)) %>%
@@ -66,39 +72,41 @@ kmean_withinss <- function(k) {
 }
 
 #You can test the function with equals 5
-kmean_withinss(2)
+kmean_withinss(2) #gives error value 
 
 #Step 2 - Run the algorithm n times
 
 
 
 # Set maximum cluster 
-max_k <-20 
+max_k <-25 
 # Run algorithm over a range of k 
+#sapply - for loop 
 wss <- sapply(2:max_k, kmean_withinss)
-
+wss
 elbow <-data.frame(2:max_k, wss)
-
+elbow
 library(ggplot2)
 
 #Plot the graph to visualize where is the elbow point
-# Plot the graph with gglop
+# Plot the graph with gglop x2.max_k, wss are names of column in table elbow
 ggplot(elbow, aes(x = X2.max_k, y = wss)) +
   geom_point() +
   geom_line() +
-  scale_x_continuous(breaks = seq(1, 20, by = 1))
+  scale_x_continuous(breaks = seq(1, 25, by = 1))
 
 ##8 is more optimal value of K from graph
 
-#Examining the cluster
+#Examining the cluster 10 clusters
 pc_cluster_2 <-kmeans(rescale_df, 10)
 
 
-pc_cluster_2$cluster
-pc_cluster_2$centers
-pc_cluster_2$size
+pc_cluster_2$cluster #show cluster number of each row
+pc_cluster_2$centers # -ve value in price column shows price sensitive cluster
+pc_cluster_2$size # no of customers in each cluster
 
-result <- cbind(df,pc_cluster_2$cluster)
+#attaching result with the original data
+result <- cbind(df,pc_cluster_2$cluster) 
 tail(result)
 
-write.csv(result,"D:\\temp\\cluster_result.csv")
+write.csv(result,"F:/R_CBAP/codes/analytics/datascience/cluster_result.csv")
