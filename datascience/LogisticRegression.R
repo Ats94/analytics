@@ -2,7 +2,7 @@ rm(list=ls(all=T))
 
 
 #### Setting working Directory
-setwd("F:\R_CBAP\codes\analytics\datascience")
+setwd("F:\\R_CBAP\\codes\\analytics\\datascience")
 
 ######### Load Libraries ###############
 install.packages("mlbench")
@@ -20,8 +20,8 @@ library(dummies)
 
 library(e1071)  
 ############# Read the data  ##############
-data = read.csv("bank.csv", header = T)
-
+data = read.csv("bank.csv", header = T) #make first row as header
+head(data)
 
 # Input variables
 # 
@@ -51,7 +51,8 @@ data = read.csv("bank.csv", header = T)
 
 
 
-
+nrow(data)
+#removing the missing values
 data = data[complete.cases(data), ]
 
 
@@ -70,12 +71,12 @@ names(missing_val)[1] =  "Missing_number"
 
 View(missing_val)
 
-########## To print unique valures##########
+########## To print unique valures##########   exporatory data analysis
 unique(data$education)
 
 # Let us group "basic.4y", "basic.9y" and "basic.6y" together and call 
 #them "basic".
-data$education=as.character(data$education)
+data$education=as.character(data$education) #converting to character
 data[data$education=='basic.6y',"education"]='Basic'
 data[data$education=='basic.9y',"education"]='Basic'
 data[data$education=='basic.4y',"education"]='Basic'
@@ -88,6 +89,7 @@ unique(data$education)
 ###############      Data exploration       ###################
 install.packages("data.table")
 library(data.table)
+# unique values in a column
 uniqueN(data$y)
 
 # plotting bar plot for dependent variable
@@ -98,24 +100,25 @@ barplot(tbl, beside = TRUE, legend = TRUE)
 # colored bar plot
 library(ggplot2)
 ggplot(as.data.frame(tbl), aes(factor(y), Freq, fill =y)) +geom_col(position = 'dodge')
+#lass is imbalance
+
 
 #further exploration
+#in how many instanes y was 0
 
 count_no_sub = length(data[data['y']==0])
 count_sub = length(data[data['y']==1])
 pct_of_no_sub = count_no_sub/(count_no_sub+count_sub)
 print(paste("percentage of no subscription is", pct_of_no_sub*100))
-pct_of_sub = count_sub/(count_no_sub+count_sub)
-print(paste("percentage of subscription", pct_of_sub*100))
+#y=0 accuracy is 88%
+pct_of_sub = count_sub/(count_no_sub+count_sub)  
+print(paste("percentage of subscription", pct_of_sub*100)) #y=1
 
 
 #Our classes are imbalanced, and the ratio of no-subscription to subscription 
 #instances is 89:11. Before we go ahead to balance the classes,
-
-
-
-
-
+#SMOTE where changing dataset for it will work on less data to create more data to create
+#balance for value 1
 
 
 #Visualizations
@@ -175,7 +178,9 @@ barplot(job_table,col=color,legend=TRUE,ylab='Frequency of Purchase',xlab='poutc
 
 
 ############ Creating dummuy Variables ##########
-
+#for converting categorical variable into number
+#mont column gets split into month_jan, month_feb,month_march,etc
+str(data)
 data.new <- dummy.data.frame(data, sep = "_")
 
 # our final data columns
@@ -184,11 +189,11 @@ names(data.new)
 
 
 ########### Spliting data into train and test with 70-30  ##########
-
+#simple random sampling 
 sample.data= sample(1:nrow(data.new),size= round(0.7*nrow(data.new)))
 train= data.new[sample.data,]
 test= data.new[-sample.data,]
-train = train[complete.cases(train), ]
+train = train[complete.cases(train), ]#checking missing value
 
 colnames(train)
 
@@ -204,11 +209,11 @@ logit_model = glm(y~.,data=train, family = "binomial")
 #summary of the model
 summary(logit_model)
 
-#predict using logistic regression
+#predict using logistic regression on test dataset applying learning
+# response  - result inform of prob for every row
 logit_Predictions = predict(logit_model, newdata = test, type = "response")
 
 head(logit_Predictions)
-
 
 
 #convert prob
@@ -223,7 +228,7 @@ write.csv(result, file = "campaign.csv")
 ##Evaluate the performance of classification model and making confusion matrix
 ConfMatrix_RF = table(test$y, logit_Predictions)
 confusionMatrix(ConfMatrix_RF)
-
+ 
 
 
 
